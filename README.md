@@ -21,6 +21,10 @@ sudo docker-compose up -d --build
 
 sudo docker update --cpus 0.8 servidor_a
 
+sudo docker update --cpus 0.2 servidor_b
+
 sudo docker ps
 
 sudo docker inspect servidor_a | grep NanoCpus
+
+sudo docker inspect servidor_b | grep NanoCpus
