@@ -17,14 +17,25 @@ A rede foi construída utilizando **Docker Compose** seguindo uma topologia em *
 ### 2. Subir, validar e confirmar limites da Infraestrutura
 Na raiz do projeto, execute:
 ```bash
-sudo docker-compose up -d --build
+docker compose build --parallel
 
-sudo docker update --cpus 0.8 servidor_a
+docker compose up -d containernet-lab
 
-sudo docker update --cpus 0.2 servidor_b
+docker compose exec containernet-lab bash 
+```
 
-sudo docker ps
+Dentro do containernet-lab:
+```bash
+python3 nginx_lb.py # OU python3 bmv2_lb.py
 
-sudo docker inspect servidor_a | grep NanoCpus
+# A partir daqui a validação da infra-estrutura é feita com os mecanismos do containernet
+```
 
-sudo docker inspect servidor_b | grep NanoCpus
+Paralelamente, os serviços são testados da seguinte forma:
+```bash
+docker exec -it mn.client curl 10.0.0.20
+docker exec -it mn.client curl 10.0.0.21
+docker exec -it mn.client curl 10.0.0.22
+```
+
+
