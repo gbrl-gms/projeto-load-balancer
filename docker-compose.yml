@@ -1,27 +1,61 @@
-version: '3.9'
-
 services:
-  servidor_a:
-    build: ./servers
-    container_name: servidor_a
-    environment:
-      - SERVER_ID=Servidor_A_80pct
+  # Environment images
+  server_a:
+    build: ./images/mirror_server
+    container_name: sv-a
     cpus: '0.8'
 
-  servidor_b:
-    build: ./servers
-    container_name: servidor_b
-    environment:
-      - SERVER_ID=Servidor_B_20pct
+  server_b:
+    build: ./images/mirror_server
+    container_name: sv-b
     cpus: '0.2'
 
-  load_balancer:
-    build: ./load_balancer
-    container_name: load_balancer
-    environment:
-      - SERVER_ID=Load_Balancer
+  load_balancer_nginx:
+    build: ./images/load_balancer_nginx
+    container_name: lb-ng
 
-  cliente:
-    image: curlimages/curl:latest
-    container_name: cliente_node
-    entrypoint: ["/bin/sh", "-c", "sleep infinity"]
+  load_balancer_bmv2:
+    build: ./images/load_balancer_bmv2
+    container_name: lb-bm
+    command: /bin/bash
+
+  client:
+    build: ./images/client_node
+    container_name: cli
+
+    command: /bin/bash
+    tty: true
+    stdin_open: true
+
+  # Containernet privileged image
+  containernet-lab:
+    image: containernet/containernet:latest
+    container_name: containernet-lab
+    privileged: true
+    pid: host
+    tty: true
+    stdin_open: true
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./containernet/scripts:/scripts
+
+    environment:
+      - PYTHONUNBUFFERED=1
+
+    working_dir: /scripts
+
+    entrypoint: /bin/bash
+
+    networks:
+      - lab-network
+
+    healthcheck:
+      test: ["CMD", "docker", "ps"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  lab-network:
+    driver: bridge
