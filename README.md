@@ -26,6 +26,7 @@ docker compose exec containernet-lab bash
 
 Dentro do containernet-lab:
 ```bash
+service openvswitch-switch start
 python3 nginx_lb.py # OU python3 bmv2_lb.py
 
 # A partir daqui a validação da infra-estrutura é feita com os mecanismos do containernet
