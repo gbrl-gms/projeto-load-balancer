@@ -4,6 +4,7 @@ RUN apk add --no-cache \
     net-tools \
     iputils \
     iproute2 \
-    bash
+    bash \
+    iperf3
 
 CMD /bin/bash
