@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# ==============================================================================
+# DASH Dataset Downloader
+# Purpose: Downloads the MPD manifest and the 4 lowest bitrate video qualities.
+# ==============================================================================
+
+# Configuration
+BASE_URL="https://ftp.itec.aau.at/datasets/DASHDataset2014/BigBuckBunny/15sec/"
+MANIFEST_FILE="BigBuckBunny_15s_onDemand_2014_05_09.mpd"
+TARGET_DIR="/var/www/html/videos"
+TEMP_MPD="video.mpd"
+
+# Create target directory
+mkdir -p "$TARGET_DIR"
+cd "$TARGET_DIR" || exit
+
+echo "--- Downloading Manifest ---"
+wget -q "$BASE_URL$MANIFEST_FILE" -O "$TEMP_MPD"
+
+echo "--- Identifying the 4 lowest video qualities (bandwidth) ---"
+# Extracts bandwidth values, sorts numerically, and picks the top 4
+SELECTED_BPS=$(grep -oP 'bandwidth="\K[^"]+' "$TEMP_MPD" | sort -n | head -n 4)
+BPS_ARRAY=($SELECTED_BPS)
+
+echo "Selected Qualities (bps): ${BPS_ARRAY[*]}"
+
+# 1. Download Video Segments
+for bps in "${BPS_ARRAY[@]}"; do
+    echo "--- Downloading Video Folder: bunny_${bps}bps ---"
+    # Downloads the specific directory while maintaining structure
+    wget -q -r -np -nH --cut-dirs=4 -R "index.html*" "${BASE_URL}bunny_${bps}bps/"
+done
+
+# 2. Download Audio Segments (Mandatory for playback with sound)
+# This finds the first audio representation in the MPD and downloads its folder
+AUDIO_FOLDER=$(grep -oP 'bunny_audio_[^"]+' "$TEMP_MPD" | head -n 1)
+if [ -n "$AUDIO_FOLDER" ]; then
+    echo "--- Downloading Audio Folder: $AUDIO_FOLDER ---"
+    wget -q -r -np -nH --cut-dirs=4 -R "index.html*" "${BASE_URL}${AUDIO_FOLDER}/"
+fi
+
+# 3. Clean up the Manifest (Remove unselected representations)
+if command -v xmlstarlet &> /dev/null; then
+    echo "--- Optimizing MPD file ---"
+    
+    # Build a query to delete representations NOT in our selected list
+    # We keep the selected video bandwidths AND any audio representations
+    DELETE_QUERY=$(printf " and @bandwidth!='%s'" "${BPS_ARRAY[@]}")
+    
+    xmlstarlet ed -L -N x="urn:mpeg:dash:schema:mpd:2011" \
+      -d "//x:Representation[not(contains(../@mimeType,'audio')) and ${DELETE_QUERY# and }]" "$TEMP_MPD"
+    
+    echo "Manifest optimized successfully."
+else
+    echo "Warning: xmlstarlet not found. The player might still try to request missing files."
+    echo "Install it with: sudo apt install xmlstarlet"
+fi
+
+echo "--- Process Completed! Files located in $TARGET_DIR ---"

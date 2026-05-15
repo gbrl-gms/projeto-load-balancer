@@ -9,10 +9,15 @@ RUN apt-get update && apt-get install -y \
     iproute2 \
     bash \
     iperf3 \
+    xmlstarlet \
     && rm -rf /var/lib/apt/lists/*
 
 COPY nginx.conf /etc/nginx/nginx.conf
-COPY videos /var/www/html/videos
+RUN mkdir /var/www/html/videos
+
+COPY download /app/download
+RUN chmod +x /app/download
+RUN /app/download
 
 EXPOSE 80 5000
 
