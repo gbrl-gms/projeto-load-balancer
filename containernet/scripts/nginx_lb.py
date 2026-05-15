@@ -44,6 +44,8 @@ def topology():
     info('*** Network Nodes\n')
     s1 = net.addSwitch('s1', cls=OVSSwitch)
 
+    sleep(2)
+
     load_b = net.addDocker(
         'load_b', 
         ip='10.0.0.20', 
@@ -57,7 +59,7 @@ def topology():
         ip='10.0.0.21', 
         dimage='projeto-load-balancer-server_a', 
         network_mode='none',
-        dcmd="iperf3 -s -D && python3 /app/monitor.py & nginx -g 'daemon off;'"
+        dcmd="nginx -g 'daemon off;'"
     )
 
     srv_b = net.addDocker(
@@ -65,7 +67,7 @@ def topology():
         ip='10.0.0.22', 
         dimage='projeto-load-balancer-server_b', 
         network_mode='none',
-        dcmd="iperf3 -s -D && python3 /app/monitor.py & nginx -g 'daemon off;'"
+        dcmd="nginx -g 'daemon off;'"
     )
 
     client = net.addDocker(

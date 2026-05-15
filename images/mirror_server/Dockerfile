@@ -10,10 +10,11 @@ RUN apt-get update && apt-get install -y \
     bash \
     iperf3 \
     xmlstarlet \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
 COPY nginx.conf /etc/nginx/nginx.conf
-RUN mkdir /var/www/html/videos
+RUN mkdir -p /usr/share/nginx/html/videos
 
 COPY download /app/download
 RUN chmod +x /app/download

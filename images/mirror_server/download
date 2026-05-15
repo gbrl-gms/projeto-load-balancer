@@ -8,7 +8,7 @@
 # Configuration
 BASE_URL="https://ftp.itec.aau.at/datasets/DASHDataset2014/BigBuckBunny/15sec/"
 MANIFEST_FILE="BigBuckBunny_15s_onDemand_2014_05_09.mpd"
-TARGET_DIR="/var/www/html/videos"
+TARGET_DIR="/usr/share/nginx/html/videos"
 TEMP_MPD="video.mpd"
 
 # Create target directory
