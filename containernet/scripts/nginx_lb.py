@@ -9,29 +9,30 @@ import json
 def get_state(net, target_ip):
     client = net.get('client')
 
-    # 1. latencia (do cliente para o servidor)
+    # 1. Latência: adicionado tratamento para caso o comando ping retorne vazio
     res_ping = client.cmd(f'ping -c 1 -W 1 {target_ip} | grep rtt | cut -d"/" -f5')
     try:
-        latency = float(res_ping)
+        latency = float(res_ping) if res_ping.strip() else 999.0
     except:
         latency = 999.0
 
-    # 2. throughput (vazão)
+    # 2. Throughput (Vazão)
     res_iperf = client.cmd(f'iperf3 -c {target_ip} -t 1 -p 80 -J')
     try:
         data = json.loads(res_iperf)
-        throughput = data['end']['sum_received']['bits_per_second'] / 1e6  # Convertendo para Mbps
+        throughput = data['end']['sum_received']['bits_per_second'] / 1e6  # Mbps
     except:
         throughput = 0.0
 
-    # 3. cpu e memoria (o cliente faz um curl na porta 81 do servidor alvo)
-    res_so = client.cmd(f'curl -s http://{target_ip}:81/metrics')
+    # 3. CPU e Memória (Métricas de sistema via API Flask na porta 81)
+    res_so = client.cmd(f'curl -s --max-time 2 http://{target_ip}:81/metrics')
     try:
         so_data = json.loads(res_so)
         cpu = so_data['cpu']
         mem = so_data['memory']
     except:
-        cpu, mem = 100.0, 100.0 # valor de segurança
+        # Se o curl falhar, mantém os valores de segurança
+        cpu, mem = 100.0, 100.0 
 
     return {"lat": latency, "thr": throughput, "cpu": cpu, "mem": mem}
 
@@ -44,8 +45,7 @@ def topology():
     info('*** Network Nodes\n')
     s1 = net.addSwitch('s1', cls=OVSSwitch)
 
-    sleep(2)
-
+    # Balanceador Nginx
     load_b = net.addDocker(
         'load_b', 
         ip='10.0.0.20', 
@@ -54,20 +54,22 @@ def topology():
         dcmd="nginx -g 'daemon off;'"
     )
 
+    # Servidor A: Inicia o iperf, o monitor de recursos e o nginx
     srv_a = net.addDocker(
         'srv_a', 
         ip='10.0.0.21', 
         dimage='projeto-load-balancer-server_a', 
         network_mode='none',
-        dcmd="nginx -g 'daemon off;'"
+        dcmd="iperf3 -s -D; python3 /app/monitor.py & nginx -g 'daemon off;'"
     )
 
+    # Servidor B
     srv_b = net.addDocker(
         'srv_b', 
         ip='10.0.0.22', 
         dimage='projeto-load-balancer-server_b', 
         network_mode='none',
-        dcmd="nginx -g 'daemon off;'"
+        dcmd="iperf3 -s -D; python3 /app/monitor.py & nginx -g 'daemon off;'"
     )
 
     client = net.addDocker(
@@ -86,22 +88,21 @@ def topology():
     info('*** Starting the network\n')
     net.start()    
 
-    info('*** Waiting for containers to start (10s)\n')
-    sleep(10)
+    info('*** Waiting for containers to start (15s)\n')
+    sleep(15) # Aumentado um pouco para garantir que o Flask suba
 
     info('*** Baseline Collection Started (Press Ctrl+C for CLI)\n')
     try:
         while True:
-            # Coleta do servidor A e B
+            # Coleta métricas de ambos os servidores
             state_a = get_state(net, '10.0.0.21')
             state_b = get_state(net, '10.0.0.22')
 
-            # Prints organizados para o log
+            # Exibição dos dados coletados
             print("-" * 50)
             print(f"[SRV_A] CPU: {state_a['cpu']}% | MEM: {state_a['mem']}% | LAT: {state_a['lat']}ms | THR: {state_a['thr']}Mbps")
             print(f"[SRV_B] CPU: {state_b['cpu']}% | MEM: {state_b['mem']}% | LAT: {state_b['lat']}ms | THR: {state_b['thr']}Mbps")
             
-            # No futuro entra o Q-learning para decidir o balanceamento, por enquanto apenas monitoramos
             sleep(5)
             
     except KeyboardInterrupt:
