@@ -1,12 +1,12 @@
-# Balanceamento de Carga Inteligente com Q-Learning (Etapa 2)
+# Balanceamento de Carga Inteligente - Etapa 3
 
-Este projeto faz parte da disciplina de Avaliação de Desempenho do IFPB. O objetivo é desenvolver um balanceador de carga dinâmico que utiliza Aprendizado por Reforço (Q-Learning) em um switch programável P4 para otimizar a distribuição de tráfego em um ambiente heterogêneo.
+Este projeto faz parte da disciplina de Avaliação de Desempenho do IFPB. A Etapa 3 foca na consolidação da infraestrutura de rede heterogênea e no sistema de telemetria avançado, preparando o terreno para a implementação do agente de Inteligência Artificial no switch P4.
 
-## 🏗️ Topologia do Ambiente
-A rede foi construída utilizando **Docker Compose** seguindo uma topologia em **Y**:
-- **1 Nó Cliente:** Responsável por gerar requisições HTTP e coletar métricas de tempo de resposta.
-- **1 Switch Central (BMv2/P4):** Atua como o Agente de IA que intercepta e redireciona pacotes.
-- **2 Servidores de Aplicação (A e B):** Containers Flask que expõem telemetria de Sistema Operacional (CPU e Memória).
+## 🏗️ Topologia e Componentes
+A rede é emulada via **Containernet**, utilizando containers Docker para isolar os serviços em uma topologia em "Y":
+- **Load Balancer (Nginx):** IP `10.0.0.20`. Responsável pela distribuição de tráfego inicial.
+- **Application Servers (A e B):** IPs `10.0.0.21` e `10.0.0.22`. Executam o serviço web (porta 80), o servidor de testes `iperf3` e o agente de telemetria em Flask (porta 81).
+- **Client:** Nó gerador de carga (IP `10.0.0.10`) responsável por simular requisições e coletar os estados da rede.
 
 ## 🚀 Como Rodar o Projeto
 
@@ -29,14 +29,31 @@ Dentro do containernet-lab:
 service openvswitch-switch start
 python3 nginx_lb.py # OU python3 bmv2_lb.py
 
-# A partir daqui a validação da infra-estrutura é feita com os mecanismos do containernet
+# Inicia o serviço de switch virtual
+service openvswitch-switch start
+
+# Executa o script de monitoramento e coleta de dados
+python3 nginx_lb.py
 ```
 
-Paralelamente, os serviços são testados da seguinte forma:
-```bash
-docker exec -it mn.client curl 10.0.0.20
-docker exec -it mn.client curl 10.0.0.21
-docker exec -it mn.client curl 10.0.0.22
-```
+📊 Sistema de Telemetria
+Nesta fase, o script nginx_lb.py utiliza a função get_state para realizar uma varredura constante dos servidores:
+
+Latência (RTT): Cálculo do tempo de ida e volta entre cliente e servidor.
+
+Throughput (Vazão): Medição da largura de banda disponível via Iperf3 em formato JSON.
+
+Recursos de Sistema: Consumo real de CPU e Memória RAM obtidos via API REST (/metrics) rodando diretamente nos servidores.
+
+🛠️ Tecnologias Utilizadas
+Containernet / Mininet: Orquestração da rede SDN.
+
+Docker: Virtualização dos nós de aplicação.
+
+Nginx: Proxy reverso e balanceamento.
+
+Python (Flask, Psutil): Agente de monitoramento e lógica de automação.
+
+Iperf3: Diagnóstico de rede.
 
 
