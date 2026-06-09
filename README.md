@@ -26,9 +26,6 @@ docker compose exec containernet-lab bash
 
 Dentro do containernet-lab:
 ```bash
-service openvswitch-switch start
-python3 nginx_lb.py # OU python3 bmv2_lb.py
-
 # Inicia o serviço de switch virtual
 service openvswitch-switch start
 
