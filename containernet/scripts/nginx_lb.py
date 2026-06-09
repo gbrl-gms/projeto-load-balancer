@@ -58,18 +58,18 @@ def topology():
     srv_a = net.addDocker(
         'srv_a', 
         ip='10.0.0.21', 
-        dimage='projeto-load-balancer-server_a', 
+        dimage='projeto-load-balancer-server_a',
         network_mode='none',
-        dcmd="iperf3 -s -D; python3 /app/monitor.py & nginx -g 'daemon off;'"
+        dcmd="bash -c 'iperf3 -s -D && python3 /app/monitor.py & exec nginx -g \"daemon off;\"'"
     )
 
     # Servidor B
     srv_b = net.addDocker(
         'srv_b', 
         ip='10.0.0.22', 
-        dimage='projeto-load-balancer-server_b', 
+        dimage='projeto-load-balancer-server_b',
         network_mode='none',
-        dcmd="iperf3 -s -D; python3 /app/monitor.py & nginx -g 'daemon off;'"
+        dcmd="bash -c 'iperf3 -s -D && python3 /app/monitor.py & exec nginx -g \"daemon off;\"'"
     )
 
     client = net.addDocker(
@@ -87,9 +87,6 @@ def topology():
 
     info('*** Starting the network\n')
     net.start()    
-
-    info('*** Waiting for containers to start (15s)\n')
-    sleep(15) # Aumentado um pouco para garantir que o Flask suba
 
     info('*** Baseline Collection Started (Press Ctrl+C for CLI)\n')
     try:
