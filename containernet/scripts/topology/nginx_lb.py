@@ -5,6 +5,9 @@ from mininet.link import TCLink
 from mininet.log import setLogLevel, info
 from time import sleep
 import json
+import os
+
+scripts_path = os.path.abspath('../metrics')
 
 def topology():
     net = Containernet(controller=Controller)
@@ -30,7 +33,8 @@ def topology():
         ip='10.0.0.21', 
         dimage='projeto-load-balancer-server_a',
         network_mode='none',
-        dcmd="bash -c 'iperf3 -s -D && python3 /app/monitor.py & exec nginx -g \"daemon off;\"'"
+        dcmd="bash -c 'iperf3 -s -D && python3 /app/monitor.py & exec nginx -g \"daemon off;\"'",
+        volumes=[f"{scripts_path}:/scripts"]
     )
 
     # Servidor B
@@ -39,14 +43,16 @@ def topology():
         ip='10.0.0.22', 
         dimage='projeto-load-balancer-server_b',
         network_mode='none',
-        dcmd="bash -c 'iperf3 -s -D && python3 /app/monitor.py & exec nginx -g \"daemon off;\"'"
+        dcmd="bash -c 'iperf3 -s -D && python3 /app/monitor.py & exec nginx -g \"daemon off;\"'",
+        volumes=[f"{scripts_path}:/scripts"]
     )
 
     client = net.addDocker(
         'client', 
         ip = '10.0.0.10', 
         dimage='projeto-load-balancer-client',
-        network_mode='none'
+        network_mode='none',
+        volumes=[f"{scripts_path}:/scripts"]
     )
 
     info('*** Linking topology\n')
