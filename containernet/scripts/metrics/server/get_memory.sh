@@ -1,6 +1,7 @@
 #!/bin/bash
+echo $SRV > /tmp/get_memory_manifest
 
-CSV_FILE="memory_metrics_$(date +"%Y%m%d_%H%M%S").csv"
+CSV_FILE="/tmp/memory_metrics_$SRV-$(date +"%Y%m%d_%H%M%S").csv"
 LOG_INTERVAL=1
 IS_RUNNING=true
 
@@ -10,6 +11,7 @@ fi
 
 cleanup() {
 	IS_RUNNING=false
+	echo "Saved file to $CSV_FILE"
 	exit 0
 }
 
@@ -27,3 +29,4 @@ while [ "$IS_RUNNING" = true ]; do
 
 	sleep $LOG_INTERVAL
 done
+

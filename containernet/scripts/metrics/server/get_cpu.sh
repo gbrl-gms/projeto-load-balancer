@@ -1,6 +1,7 @@
 #!/bin/bash
+echo $SRV > /tmp/get_cpu_manifest
 
-CSV_FILE="cpu_metrics_$(date +"%Y%m%d_%H%M%S").csv"
+CSV_FILE="/tmp/cpu_metrics_$SRV-$(date +"%Y%m%d_%H%M%S").csv"
 INTERVAL=1
 IS_RUNNING=true
 
@@ -9,8 +10,7 @@ if [ ! -f "$CSV_FILE" ]; then
 fi
 
 cleanup() {
-	echo -e "\nInterrupt signal received. Stopping gracefully..."
-	echo "Data saved to $CSV_FILE"
+	echo "Saved file to $CSV_FILE"
 	IS_RUNNING=false
 	exit 0
 }
@@ -34,10 +34,6 @@ fetch_metric() {
 	grep -w "$key" /sys/fs/cgroup/cpu.stat | awk '{print $2}'
 }
 
-echo "Starting continuous CPU monitoring (Interval: ${INTERVAL}s)..."
-echo "Output file: $CSV_FILE"
-echo "Press Ctrl+C or send a SIGTERM to stop."
-
 TOTAL_PREV=$(fetch_metric "usage_usec")
 USER_PREV=$(fetch_metric "user_usec")
 SYS_PREV=$(fetch_metric "system_usec")
@@ -60,3 +56,4 @@ sleep $INTERVAL
 	USER_PREV=$USER_CURR
 	SYS_PREV=$SYS_CURR
 done
+

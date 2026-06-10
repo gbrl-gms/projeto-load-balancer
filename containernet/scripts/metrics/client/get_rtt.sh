@@ -3,7 +3,7 @@
 TARGET="${1:-127.0.0.1}"
 TIMESTAMP_START=$(date +"%Y%m%d_%H%M%S")
 INTERVAL=1
-CSV_FILE="ping_${TARGET}_${TIMESTAMP_START}.csv"
+CSV_FILE="/tmp/ping_${TARGET}-${TIMESTAMP_START}.csv"
 RUNNING=true
 
 echo "timestamp,min_ms,avg_ms,max_ms,mdev_ms" > "$CSV_FILE"
