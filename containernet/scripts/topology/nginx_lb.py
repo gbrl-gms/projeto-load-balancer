@@ -8,7 +8,7 @@ from mininet.cli import CLI
 from mininet.log import setLogLevel, info
 
 # Caminho absoluto para a pasta de métricas/scripts
-SCRIPTS_PATH = os.path.abspath('../metrics')
+SCRIPTS_PATH = os.path.abspath('./metrics')
 
 def parse_arguments():
     """Configura o argparse para receber o tempo de execução."""
@@ -89,6 +89,9 @@ def run_monitoring_scripts(nodes_dict, duration):
     # 2. Executa as duas instâncias do m-client.sh no cliente em background
     client.cmd(f"bash /scripts/m-client.sh {duration} 10.0.0.21 &")
     client.cmd(f"bash /scripts/m-client.sh {duration} 10.0.0.22 &")
+
+    # 3. Executa a instância do vlc
+    client.cmd(f"bash /scripts/m-dash.sh {duration} 10.0.0.20 80 /videos/video.mpd &")
     
     info('*** Monitoring scripts are running in background.\n')
 
