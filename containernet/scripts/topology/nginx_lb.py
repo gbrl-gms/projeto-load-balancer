@@ -81,17 +81,26 @@ def run_monitoring_scripts(nodes_dict, duration):
     srv_a = nodes_dict['srv_a']
     srv_b = nodes_dict['srv_b']
     client = nodes_dict['client']
+    load_b = nodes_dict['load_b']
 
     # 1. Executa o m-server.sh nos servidores (ajuste o caminho se /scripts/m-server.sh for diferente no container)
     srv_a.cmd(f"SRV=srv_a bash /scripts/m-server.sh {duration} &")
     srv_b.cmd(f"SRV=srv_b bash /scripts/m-server.sh {duration} &")
 
     # 2. Executa as duas instâncias do m-client.sh no cliente em background
-    client.cmd(f"bash /scripts/m-client.sh {duration} 10.0.0.21 &")
-    client.cmd(f"bash /scripts/m-client.sh {duration} 10.0.0.22 &")
+    client.cmd(f"/scripts/m-client.sh {duration} 10.0.0.21 &")
+    client.cmd(f"/scripts/m-client.sh {duration} 10.0.0.22 &")
 
     # 3. Executa a instância do vlc
-    client.cmd(f"bash /scripts/m-dash.sh {duration} 10.0.0.20 80 /videos/video.mpd &")
+    client.cmd(f"/scripts/m-dash.sh {duration} 10.0.0.20 80 /videos/video.mpd &")
+
+    # 4. Inicia o gerador de carga
+    # client.cmd(f"/scripts/m-wave.sh {duration} &")
+    load_b.cmd(f"bash -c '/app/wave/run_wave.sh -l flashcrowd 10 5 10' &")
+
+    # 5. Inicia degradação automática da rede
+    srv_a.cmd(f"/scripts/degrade.sh {duration} srv_a-eth0 &")
+    srv_b.cmd(f"sleep 30 && /scripts/degrade.sh {duration-30} srv_b-eth0 &")
     
     info('*** Monitoring scripts are running in background.\n')
 
@@ -114,7 +123,7 @@ def main():
     net.start()    
 
     # Execução dos scripts de métricas
-    nodes_dict = {'srv_a': srv_a, 'srv_b': srv_b, 'client': client}
+    nodes_dict = {'srv_a': srv_a, 'srv_b': srv_b, 'client': client, 'load_b': load_b}
     run_monitoring_scripts(nodes_dict, duration)
 
     info('*** Starting Mininet CLI\n')

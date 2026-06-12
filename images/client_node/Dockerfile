@@ -13,13 +13,9 @@ RUN apk add --no-cache \
 
 RUN sed -i 's/geteuid/getppid/' /usr/bin/vlc
 RUN mkdir -p /scripts
+RUN mkdir -p /vagrant/logs
 RUN mkdir -p /tmp/.X11-unix 
 RUN chmod 1777 /tmp/.X11-unix
 
-WORKDIR /scripts
-
-RUN git clone https://github.com/leandrocalmeida/wave
-
-COPY wave_config wave/run_wave.sh
 
 CMD /bin/bash
