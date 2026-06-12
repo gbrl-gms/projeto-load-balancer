@@ -19,6 +19,12 @@ def parse_arguments():
         default=60, 
         help='Tempo de execução do monitoramento em segundos (padrão: 60)'
     )
+
+    parser.add_argument(
+        '-d', '--degrade',
+        action="store_true",
+        help='Se deve haver ou não degradação da rede. (False/True) (padrão: False)'
+    )
     return parser.parse_args()
 
 def create_nodes(net):
@@ -74,7 +80,7 @@ def create_links(net, switch, nodes):
     for node in nodes:
         net.addLink(node, switch)
 
-def run_monitoring_scripts(nodes_dict, duration):
+def run_monitoring_scripts(nodes_dict, duration, degrade):
     """Executa os scripts de monitoramento em background nos nós correspondentes."""
     info(f'*** Starting metrics collection for {duration} seconds...\n')
     
@@ -99,14 +105,16 @@ def run_monitoring_scripts(nodes_dict, duration):
     load_b.cmd(f"bash -c '/app/wave/run_wave.sh -l flashcrowd 10 5 10' &")
 
     # 5. Inicia degradação automática da rede
-    srv_a.cmd(f"/scripts/degrade.sh {duration} srv_a-eth0 &")
-    srv_b.cmd(f"sleep 30 && /scripts/degrade.sh {duration-30} srv_b-eth0 &")
+    if degrade:
+        srv_a.cmd(f"/scripts/degrade.sh {duration} srv_a-eth0 &")
+        srv_b.cmd(f"sleep 30 && /scripts/degrade.sh {duration-30} srv_b-eth0 &")
     
     info('*** Monitoring scripts are running in background.\n')
 
 def main():
     args = parse_arguments()
     duration = args.time
+    degrade = args.degrade
 
     net = Containernet(controller=Controller)
 
@@ -124,10 +132,10 @@ def main():
 
     # Execução dos scripts de métricas
     nodes_dict = {'srv_a': srv_a, 'srv_b': srv_b, 'client': client, 'load_b': load_b}
-    run_monitoring_scripts(nodes_dict, duration)
+    run_monitoring_scripts(nodes_dict, duration, degrade)
 
-    info('*** Starting Mininet CLI\n')
-    CLI(net)
+    info('*** Running Experiment\n')
+    sleep(duration + 5)
 
     info('*** Stopping the network\n')
     net.stop()
