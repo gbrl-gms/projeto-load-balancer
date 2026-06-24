@@ -14,8 +14,8 @@ services:
     build: ./images/load_balancer_nginx
     container_name: lb-ng
 
-  load_balancer_bmv2:
-    build: ./images/load_balancer_bmv2
+  load_balancer_qlearn:
+    build: ./images/load_balancer_qlearn
     container_name: lb-bm
     command: /bin/bash
 
