@@ -11,11 +11,11 @@ import subprocess
 # ==============================================================================
 NUM_STATES = (8, 8)
 NUM_ACTIONS = 3
-ALPHA = 0.1
-GAMMA = 0.9
+ALPHA = 0.2
+GAMMA = 0.8
 
-INITIAL_EPSILON = 0.8
-MIN_EPSILON = 0.2
+INITIAL_EPSILON = 1.0
+MIN_EPSILON = 0.05
 STEPS_TO_MIN = 120
 LINEAR_DECAY = (INITIAL_EPSILON - MIN_EPSILON) / STEPS_TO_MIN
 
@@ -81,9 +81,9 @@ def update_weight_indices(idx_a, idx_b, action):
         if idx_b < len(POSSIBLE_WEIGHTS) - 1: idx_b += 1
     return idx_a, idx_b
 
-def calculate_reward(lat_a, lat_b):
+def calculate_reward(lat_a, lat_b, weight_a, weight_b):
     """Mapeia o desempenho do sistema em um valor de recompensa numérica."""
-    return 400 - (lat_a + lat_b)
+    return 100 - ((lat_a * weight_a) + (lat_b * weight_b))/(weight_a + weight_b)
 
 def train_agent(q_table, state, action, reward, next_state):
     """Aplica a Equação de Bellman para atualizar o conhecimento da Q-Table."""
@@ -240,7 +240,7 @@ def run_experiment():
             next_lat_a, next_lat_b = get_upstream_latency(new_weight_a, new_weight_b)
             next_state = get_current_state(next_lat_a, next_lat_b)
             
-            reward = calculate_reward(next_lat_a, next_lat_b)
+            reward = calculate_reward(next_lat_a, next_lat_b, new_weight_a, new_weight_b)
             cumulative_reward += reward
             
             # Passo 5: Atualização da Inteligência e Decaimento
