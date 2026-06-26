@@ -24,6 +24,10 @@ tc qdisc add dev "$INTERFACE" root netem delay 0ms 2>/dev/null || true
 
 echo "timestamp_ms,delay_ms" > "$CSV_FILE"
 
+WAVE_DURATION=60  
+PAUSE_DURATION=30
+CYCLE_DURATION=$((WAVE_DURATION + PAUSE_DURATION))
+
 START_TIME=$(date +%s)
 
 while true; do
@@ -31,15 +35,18 @@ while true; do
     
     [ "$ELAPSED" -ge "$DURATION" ] && cleanup
     
-    WAVE_POS=$((ELAPSED % 60))
+    WAVE_POS=$((ELAPSED % CYCLE_DURATION))
     
-    if [ "$WAVE_POS" -lt 30 ]; then
-        INDEX=$((WAVE_POS / 5))
+    if [ "$WAVE_POS" -ge "$WAVE_DURATION" ]; then
+        CURRENT_DELAY=0
     else
-        INDEX=$(((60 - WAVE_POS) / 5))
+        if [ "$WAVE_POS" -lt 30 ]; then
+            INDEX=$((WAVE_POS / 5))
+        else
+            INDEX=$(((60 - WAVE_POS) / 5))
+        fi
+        CURRENT_DELAY=${DELAYS[$INDEX]}
     fi
-    
-    CURRENT_DELAY=${DELAYS[$INDEX]}
     
     tc qdisc change dev "$INTERFACE" root netem delay ${CURRENT_DELAY}ms 20ms
     

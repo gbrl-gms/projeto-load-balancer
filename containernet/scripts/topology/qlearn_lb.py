@@ -103,12 +103,12 @@ def run_monitoring_scripts(nodes_dict, duration, degrade):
 
     # 4. Inicia o gerador de carga
     # client.cmd(f"/scripts/m-wave.sh {duration} &")
-    load_b.cmd(f"bash -c '/app/wave/run_wave.sh -l flashcrowd 10 5 10' &")
+    load_b.cmd(f"bash -c '/app/wave/run_wave.sh -l flashcrowd 30 5 10' &")
 
     # 5. Inicia degradação automática da rede
     if degrade:
         srv_a.cmd(f"/scripts/degrade.sh {duration} srv_a-eth0 &")
-        srv_b.cmd(f"sleep 30 && /scripts/degrade.sh {duration-30} srv_b-eth0 &")
+        srv_b.cmd(f"sleep 45 && /scripts/degrade.sh {duration-30} srv_b-eth0 &")
 
     # 6. Inicia o agente q-learn
     load_b.cmd(f"bash -c '/upstream-latency.sh' &")

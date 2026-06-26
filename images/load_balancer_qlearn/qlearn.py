@@ -11,12 +11,12 @@ import subprocess
 # ==============================================================================
 NUM_STATES = (8, 8)
 NUM_ACTIONS = 3
-ALPHA = 0.2
-GAMMA = 0.8
+ALPHA = 0.1
+GAMMA = 0.9
 
 INITIAL_EPSILON = 1.0
 MIN_EPSILON = 0.05
-STEPS_TO_MIN = 120
+STEPS_TO_MIN = 240
 LINEAR_DECAY = (INITIAL_EPSILON - MIN_EPSILON) / STEPS_TO_MIN
 
 POSSIBLE_WEIGHTS = [1, 2, 3, 5, 8, 12, 15]
